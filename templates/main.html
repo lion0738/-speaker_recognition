@@ -1,0 +1,52 @@
+<html>
+	<head>
+		<script src="https://code.jquery.com/jquery-latest.min.js"></script>
+		<script src="https://www.WebRTC-Experiment.com/RecordRTC.js"></script>
+	</head>
+	<body>
+		<button id="start">Start</button>
+		<button id="stop">Stop</button>
+		<script>
+		  const startButton = $("#start");
+		  const stopButton = $("#stop");
+		  stopButton.attr("disabled", true);
+
+		  const handleSuccess = function(stream) {
+			const options = {
+				recorderType: StereoAudioRecorder,
+				numberOfAudioChannels: 1,
+				sampleRate: 48000
+			};
+
+			startButton.on("click", function() {
+				$("#result").text("Recording...");
+				startButton.attr("disabled", true);
+				stopButton.attr("disabled", false);
+				mediaRecorder = new RecordRTC(stream, options);
+			    mediaRecorder.startRecording();
+			});
+
+			stopButton.on("click", function() {
+				$("#result").text("Processing...");
+				startButton.attr("disabled", false);
+				stopButton.attr("disabled", true);
+			    mediaRecorder.stopRecording(function() {
+					var xhr = new XMLHttpRequest();
+					var fd = new FormData();
+					fd.append("audio_file", mediaRecorder.getBlob(), "audio.wav");
+					xhr.open("POST", "upload", true);
+					xhr.onload = function(e) {
+					    $("#result").text(xhr.responseText);
+					}
+					xhr.send(fd);
+					mediaRecorder.destroy()
+				});
+			});
+		  };
+
+		  navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(handleSuccess);
+
+		</script>
+		<pre id="result"></pre>
+	</body>
+</html>
